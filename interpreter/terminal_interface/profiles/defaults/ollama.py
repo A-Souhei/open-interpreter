@@ -13,6 +13,8 @@ from interpreter import interpreter
 load_dotenv()
 
 ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+ollama_base_model = os.getenv("OLLAMA_BASE_MODEL", "ollama/qwen2.5-coder:7b")
+ollama_safe_mode = os.getenv("OLLAMA_SAFE_MODE", "false").lower() == "true"
 
 interpreter.system_message = """You are an AI assistant that writes markdown code snippets to answer the user's request. You speak very concisely and quickly, you say nothing irrelevant to the user's request. For example:
 
@@ -33,7 +35,7 @@ interpreter.empty_code_output_template = "The code above was executed on my mach
 interpreter.code_output_sender = "user"
 
 # LLM settings
-interpreter.llm.model = "ollama/qwen2.5-coder:7b"
+interpreter.llm.model = ollama_base_model
 interpreter.llm.api_base = ollama_base_url
 interpreter.llm.supports_functions = False
 interpreter.llm.execution_instructions = False
@@ -45,7 +47,7 @@ interpreter.llm.load()  # Loads Ollama models
 interpreter.computer.import_computer_api = False
 
 # Safety
-interpreter.safe_mode = "ask"
+interpreter.safe_mode = "ask" if ollama_safe_mode else "off"
 
 # Misc settings
 interpreter.auto_run = False
