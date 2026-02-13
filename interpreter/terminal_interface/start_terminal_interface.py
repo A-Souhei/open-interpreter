@@ -180,6 +180,7 @@ def start_terminal_interface(interpreter):
         },
         {
             "name": "safe_mode",
+            "nickname": "safe",
             "help_text": "optionally enable safety mechanisms like code scanning; valid options are off, ask, and auto",
             "type": str,
             "choices": ["off", "ask", "auto"],
@@ -190,7 +191,6 @@ def start_terminal_interface(interpreter):
             "name": "safe",
             "help_text": "enable file access protection using .gitignore and .ai-ignore patterns in the current directory",
             "type": bool,
-            "default": False,
             "attribute": {"object": interpreter, "attr_name": "safe"},
         },
         {

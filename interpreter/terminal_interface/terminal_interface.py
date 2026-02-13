@@ -218,13 +218,28 @@ def terminal_interface(interpreter, message):
                             if interpreter.safe_mode == "auto":
                                 should_scan_code = True
                             elif interpreter.safe_mode == "ask":
-                                response = input(
-                                    "  🛡️  Would you like to scan this code? (y/n)\n\n  "
-                                )
-                                print("")  # <- Aesthetic choice
-
-                                if response.strip().lower() == "y":
-                                    should_scan_code = True
+                                if inquirer and not interpreter.plain_text_display:
+                                    try:
+                                        scan_questions = [
+                                            inquirer.List(
+                                                "scan",
+                                                message="\033[31m▶\033[0m 🛡️  Would you like to scan this code?",
+                                                choices=["Yes", "No"],
+                                                default="Yes",
+                                            ),
+                                        ]
+                                        scan_answers = inquirer.prompt(scan_questions)
+                                        if scan_answers and scan_answers["scan"] == "Yes":
+                                            should_scan_code = True
+                                    except (KeyboardInterrupt, Exception):
+                                        pass
+                                else:
+                                    response = input(
+                                        "  🛡️  Would you like to scan this code? (y/n)\n\n  "
+                                    )
+                                    print("")
+                                    if response.strip().lower() == "y":
+                                        should_scan_code = True
 
                         if should_scan_code:
                             scan_code(code, language, interpreter)
@@ -235,7 +250,7 @@ def terminal_interface(interpreter, message):
                                 questions = [
                                     inquirer.List(
                                         "action",
-                                        message="Would you like to run this code?",
+                                        message="\033[31m▶\033[0m Would you like to run this code?",
                                         choices=["Yes", "No", "Edit"],
                                         default="Yes",
                                     ),
