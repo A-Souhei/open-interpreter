@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "$0")")/.." && pwd)"
+ENV_FILE="$SCRIPT_DIR/.env"
+
+# Load .env
+if [ -f "$ENV_FILE" ]; then
+    set -a
+    source "$ENV_FILE"
+    set +a
+else
+    echo "Error: .env not found at $ENV_FILE" >&2
+    echo "Copy .env.example to .env and fill in your values." >&2
+    exit 1
+fi
+
+# Activate venv
+VENV_PATH="${OI_VENV_PATH/#\~/$HOME}"
+if [ -f "$VENV_PATH/bin/activate" ]; then
+    source "$VENV_PATH/bin/activate"
+else
+    echo "Error: venv not found at $VENV_PATH" >&2
+    exit 1
+fi
+
+# Default to ollama profile if no --profile or --model given
+if ! echo "$@" | grep -qE '(--profile|--model)'; then
+    exec interpreter --profile ollama "$@"
+else
+    exec interpreter "$@"
+fi
