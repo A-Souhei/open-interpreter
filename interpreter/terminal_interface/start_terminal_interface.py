@@ -188,6 +188,12 @@ def start_terminal_interface(interpreter):
             "attribute": {"object": interpreter, "attr_name": "safe_mode"},
         },
         {
+            "name": "safe",
+            "help_text": "enable file access protection using .gitignore and .ai-ignore patterns in the current directory",
+            "type": bool,
+            "attribute": {"object": interpreter, "attr_name": "safe"},
+        },
+        {
             "name": "debug",
             "nickname": "debug",
             "help_text": "debug mode for open interpreter developers",
@@ -480,6 +486,13 @@ Use """ to write multi-line messages.
         os.getenv("DISABLE_TELEMETRY", "false").lower() == "true"
         or args.disable_telemetry
     )
+
+    ### Initialize --safe file access guard
+    if interpreter.safe:
+        from ..core.utils.security import FileAccessGuard
+
+        guard = FileAccessGuard(working_dir=os.getcwd(), enabled=True)
+        interpreter._file_access_guard = guard
 
     ### Set some helpful settings we know are likely to be true
 

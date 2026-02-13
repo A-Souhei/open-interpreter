@@ -34,6 +34,22 @@ def respond(interpreter):
         if interpreter.custom_instructions:
             system_message += "\n\n" + interpreter.custom_instructions
 
+        # Add safe mode file protection instructions
+        if getattr(interpreter, "safe", False) and getattr(interpreter, "_file_access_guard", None):
+            guard = interpreter._file_access_guard
+            patterns_text = guard.get_protected_patterns_text()
+            if patterns_text:
+                system_message += (
+                    "\n\nIMPORTANT — PROTECTED FILES (safe mode is ON):\n"
+                    "The following files and directories are PROTECTED. You MUST NOT "
+                    "read, write, display, cat, open, import, include, source, or "
+                    "interact with them in ANY way through code or commands. Do not "
+                    "attempt to access their contents even indirectly. If the user "
+                    "asks you to access any of these, explain that they are protected "
+                    "by safe mode.\n"
+                    f"{patterns_text}"
+                )
+
         # Add computer API system message
         if interpreter.computer.import_computer_api:
             if interpreter.computer.system_message not in system_message:

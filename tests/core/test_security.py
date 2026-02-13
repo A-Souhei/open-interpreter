@@ -10,6 +10,7 @@ from interpreter.core.utils.security import (
     FileAccessGuard,
     _AUDIT_LOG_FILE,
     audit_log,
+    check_code_for_protected_access,
     cleanup_audit_log,
     get_blocked_commands,
     is_command_blocked,
@@ -193,3 +194,162 @@ class TestGitignoreNegation:
 
         allowed, _ = guard.is_path_allowed(str(tmp_path / "secrets_public.txt"))
         assert allowed, "secrets_public.txt should NOT be blocked by pattern 'secret'"
+
+
+# ---------------------------------------------------------------------------
+# 7. .ai-ignore support
+# ---------------------------------------------------------------------------
+
+class TestAiIgnore:
+    def test_ai_ignore_patterns_loaded(self, tmp_path):
+        ai_ignore = tmp_path / ".ai-ignore"
+        ai_ignore.write_text("confidential/\n*.secret\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        assert "confidential/" in guard._gitignore_patterns
+        assert "*.secret" in guard._gitignore_patterns
+
+    def test_ai_ignore_blocks_file(self, tmp_path):
+        ai_ignore = tmp_path / ".ai-ignore"
+        ai_ignore.write_text("private.txt\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        allowed, _ = guard.is_path_allowed(str(tmp_path / "private.txt"))
+        assert not allowed
+
+    def test_ai_ignore_combined_with_gitignore(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text(".env\n")
+        ai_ignore = tmp_path / ".ai-ignore"
+        ai_ignore.write_text("private.txt\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        allowed_env, _ = guard.is_path_allowed(str(tmp_path / ".env"))
+        allowed_priv, _ = guard.is_path_allowed(str(tmp_path / "private.txt"))
+        allowed_ok, _ = guard.is_path_allowed(str(tmp_path / "readme.md"))
+        assert not allowed_env
+        assert not allowed_priv
+        assert allowed_ok
+
+    def test_no_ai_ignore_file_is_fine(self, tmp_path):
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        allowed, _ = guard.is_path_allowed(str(tmp_path / "readme.md"))
+        assert allowed
+
+
+# ---------------------------------------------------------------------------
+# 8. Code scanning for protected file access
+# ---------------------------------------------------------------------------
+
+class TestCheckCodeForProtectedAccess:
+    @pytest.fixture
+    def guard(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text(".env\nsecrets/\n*.key\n")
+        return FileAccessGuard(working_dir=str(tmp_path))
+
+    def test_code_referencing_env_blocked(self, guard):
+        blocked, reason = check_code_for_protected_access('open(".env")', guard)
+        assert blocked
+        assert ".env" in reason
+
+    def test_code_referencing_secrets_dir_blocked(self, guard):
+        blocked, reason = check_code_for_protected_access('cat secrets/api.txt', guard)
+        assert blocked
+        assert "secrets" in reason
+
+    def test_code_referencing_key_extension_blocked(self, guard):
+        blocked, reason = check_code_for_protected_access('cat server.key', guard)
+        assert blocked
+        assert ".key" in reason
+
+    def test_safe_code_allowed(self, guard):
+        blocked, _ = check_code_for_protected_access('print("hello")', guard)
+        assert not blocked
+
+    def test_disabled_guard_allows_everything(self):
+        guard = FileAccessGuard(enabled=False)
+        blocked, _ = check_code_for_protected_access('open(".env")', guard)
+        assert not blocked
+
+    def test_none_guard_allows_everything(self):
+        blocked, _ = check_code_for_protected_access('open(".env")', None)
+        assert not blocked
+
+    def test_negation_patterns_not_checked(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text("*.log\n!important.log\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        # *.log should still trigger because it's in patterns, but !important.log should not
+        blocked, _ = check_code_for_protected_access('cat app.log', guard)
+        assert blocked
+
+
+# ---------------------------------------------------------------------------
+# 9. Terminal integration with --safe file guard
+# ---------------------------------------------------------------------------
+
+class TestTerminalSafeMode:
+    def test_terminal_blocks_code_accessing_protected_file(self):
+        from interpreter import interpreter
+        from interpreter.core.utils.security import FileAccessGuard
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            gitignore_path = os.path.join(tmp, ".gitignore")
+            with open(gitignore_path, "w") as f:
+                f.write(".env\nsecrets/\n")
+            interpreter._file_access_guard = FileAccessGuard(
+                working_dir=tmp, enabled=True
+            )
+            try:
+                result = interpreter.computer.terminal.run(
+                    "shell", "cat .env", stream=False
+                )
+                assert "Blocked" in result[0]["content"]
+            finally:
+                interpreter._file_access_guard = None
+
+    def test_terminal_allows_safe_code_in_safe_mode(self):
+        from interpreter import interpreter
+        from interpreter.core.utils.security import FileAccessGuard
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            gitignore_path = os.path.join(tmp, ".gitignore")
+            with open(gitignore_path, "w") as f:
+                f.write(".env\n")
+            interpreter._file_access_guard = FileAccessGuard(
+                working_dir=tmp, enabled=True
+            )
+            try:
+                result = interpreter.computer.terminal.run(
+                    "shell", "echo hello", stream=False
+                )
+                assert "Blocked" not in result[0].get("content", "")
+            finally:
+                interpreter._file_access_guard = None
+
+
+# ---------------------------------------------------------------------------
+# 10. Protected patterns text for LLM
+# ---------------------------------------------------------------------------
+
+class TestProtectedPatternsText:
+    def test_returns_patterns(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text(".env\nsecrets/\n*.key\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        text = guard.get_protected_patterns_text()
+        assert ".env" in text
+        assert "secrets/" in text
+        assert "*.key" in text
+
+    def test_excludes_negations(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text("*.log\n!important.log\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        text = guard.get_protected_patterns_text()
+        assert "*.log" in text
+        assert "!important.log" not in text
+
+    def test_empty_when_no_patterns(self, tmp_path):
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        assert guard.get_protected_patterns_text() == ""
