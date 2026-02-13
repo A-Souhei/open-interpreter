@@ -36,7 +36,7 @@ if "--os" in sys.argv:
     def check_for_update():
         try:
             # Fetch the latest version from the PyPI API
-            response = requests.get(f"https://pypi.org/pypi/open-interpreter/json", timeout=3)
+            response = requests.get(f"https://pypi.org/pypi/open-interpreter/json", timeout=2)
             latest_version = response.json()["info"]["version"]
 
             # Get the current version using importlib.metadata
@@ -46,8 +46,9 @@ if "--os" in sys.argv:
         except Exception:
             return False
 
-    if os.environ.get("OI_DISABLE_UPDATE_CHECK", "").lower() != "true":
-        if check_for_update():
+    if os.environ.get("OI_DISABLE_UPDATE_CHECK", "").lower() == "true":
+        pass  # Update check explicitly disabled via environment variable
+    elif check_for_update():
             print_markdown(
                 "> **A new version of Open Interpreter is available.**\n>Please run: `pip install --upgrade open-interpreter`\n\n---"
             )

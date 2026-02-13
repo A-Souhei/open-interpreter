@@ -2,18 +2,18 @@
 
 import os
 import stat
-import tempfile
+from unittest.mock import patch
 
 import pytest
 
 from interpreter.core.utils.security import (
     FileAccessGuard,
+    _AUDIT_LOG_FILE,
     audit_log,
     cleanup_audit_log,
     get_blocked_commands,
     is_command_blocked,
     set_owner_only,
-    _AUDIT_LOG_FILE,
 )
 
 
@@ -117,11 +117,19 @@ class TestAuditLog:
         mode = stat.S_IMODE(os.stat(_AUDIT_LOG_FILE).st_mode)
         assert mode == 0o600
 
-    def test_cleanup_removes_old_entries(self):
+    def test_cleanup_removes_old_entries_keeps_recent(self):
+        # Write a fresh entry, then clean with 0 days → removes it
         audit_log("old_event", "will be cleaned")
         cleanup_audit_log(max_age_days=0)
         with open(_AUDIT_LOG_FILE) as f:
             assert f.read().strip() == ""
+
+        # Write a fresh entry, clean with 365 days → keeps it
+        audit_log("recent_event", "should survive")
+        cleanup_audit_log(max_age_days=365)
+        with open(_AUDIT_LOG_FILE) as f:
+            content = f.read()
+            assert "recent_event" in content
 
 
 # ---------------------------------------------------------------------------
@@ -152,3 +160,36 @@ class TestTerminalBlocking:
         from interpreter import interpreter
         result = interpreter.computer.terminal.run("shell", "echo hello", stream=False)
         assert "Blocked" not in result[0].get("content", "")
+
+    def test_blocked_command_does_not_spawn_subprocess(self):
+        """Verify that blocking happens *before* any subprocess is created."""
+        from interpreter import interpreter
+        with patch("subprocess.Popen") as mock_popen:
+            result = interpreter.computer.terminal.run("shell", "rm -rf /", stream=False)
+            assert "Blocked" in result[0]["content"]
+            mock_popen.assert_not_called()
+
+
+# ---------------------------------------------------------------------------
+# 6. Gitignore negation
+# ---------------------------------------------------------------------------
+
+class TestGitignoreNegation:
+    def test_negation_pattern_allows_file(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text("*.log\n!important.log\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+
+        allowed_normal, _ = guard.is_path_allowed(str(tmp_path / "debug.log"))
+        assert not allowed_normal, "debug.log should be blocked by *.log"
+
+        allowed_negated, _ = guard.is_path_allowed(str(tmp_path / "important.log"))
+        assert allowed_negated, "important.log should be allowed by !important.log"
+
+    def test_no_false_positive_on_prefix(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text("secret\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+
+        allowed, _ = guard.is_path_allowed(str(tmp_path / "secrets_public.txt"))
+        assert allowed, "secrets_public.txt should NOT be blocked by pattern 'secret'"

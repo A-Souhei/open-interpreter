@@ -13,6 +13,12 @@ class Files:
 
     @property
     def guard(self):
+        """Return the file access guard.
+
+        The guard is disabled by default.  Call
+        :meth:`set_working_directory` to enable working-directory
+        enforcement and .gitignore-based blocking.
+        """
         if self._guard is None:
             self._guard = FileAccessGuard(enabled=False)
         return self._guard
