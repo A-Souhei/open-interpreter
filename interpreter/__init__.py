@@ -1,3 +1,4 @@
+import os
 import sys
 
 if "--os" in sys.argv:
@@ -33,19 +34,23 @@ if "--os" in sys.argv:
     from packaging import version
 
     def check_for_update():
-        # Fetch the latest version from the PyPI API
-        response = requests.get(f"https://pypi.org/pypi/open-interpreter/json")
-        latest_version = response.json()["info"]["version"]
+        try:
+            # Fetch the latest version from the PyPI API
+            response = requests.get(f"https://pypi.org/pypi/open-interpreter/json", timeout=3)
+            latest_version = response.json()["info"]["version"]
 
-        # Get the current version using importlib.metadata
-        current_version = version("open-interpreter")
+            # Get the current version using importlib.metadata
+            current_version = version("open-interpreter")
 
-        return version.parse(latest_version) > version.parse(current_version)
+            return version.parse(latest_version) > version.parse(current_version)
+        except Exception:
+            return False
 
-    if check_for_update():
-        print_markdown(
-            "> **A new version of Open Interpreter is available.**\n>Please run: `pip install --upgrade open-interpreter`\n\n---"
-        )
+    if os.environ.get("OI_DISABLE_UPDATE_CHECK", "").lower() != "true":
+        if check_for_update():
+            print_markdown(
+                "> **A new version of Open Interpreter is available.**\n>Please run: `pip install --upgrade open-interpreter`\n\n---"
+            )
 
     if "--voice" in sys.argv:
         print("Coming soon...")
