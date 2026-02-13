@@ -70,7 +70,7 @@ def terminal_interface(interpreter, message):
         if (
             not interpreter.plain_text_display
         ):  # A proxy/heuristic for standard in mode, which isn't tracked (but prob should be)
-            interpreter_intro_message.append("⌨️  Press `CTRL-C` to exit.")
+            interpreter_intro_message.append("⌨️ Press `CTRL-C` to exit.")
 
         interpreter.display_message("\n\n".join(interpreter_intro_message) + "\n")
 
