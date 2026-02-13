@@ -11,7 +11,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Pre-download the default model at build time
 ENV EMBEDDING_MODEL=all-MiniLM-L6-v2
-RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('${EMBEDDING_MODEL}')"
+RUN python3 -c "import os; from sentence_transformers import SentenceTransformer; SentenceTransformer(os.environ['EMBEDDING_MODEL'])"
 
 COPY app.py .
 
