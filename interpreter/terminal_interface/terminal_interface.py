@@ -241,16 +241,15 @@ def terminal_interface(interpreter, message):
                                 else:
                                     response_map = {"Yes": "y", "No": "n", "Edit": "e"}
                                     response = response_map.get(answers["action"], "n")
-                            except (Exception, KeyboardInterrupt) as exc:
-                                if isinstance(exc, KeyboardInterrupt):
-                                    # Treat Ctrl-C during inquirer as a decline to run code
-                                    response = "n"
-                                else:
-                                    # Fallback to plain text if inquirer fails
-                                    response = input(
-                                        "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
-                                    )
-                                    print("")  # <- Aesthetic choice
+                            except KeyboardInterrupt:
+                                # Treat Ctrl-C during inquirer as a decline to run code
+                                response = "n"
+                            except Exception:
+                                # Fallback to plain text if inquirer fails
+                                response = input(
+                                    "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
+                                )
+                                print("")  # <- Aesthetic choice
                         elif interpreter.plain_text_display:
                             response = input(
                                 "Would you like to run this code? [Y]es / [N]o / [E]dit\n\n"

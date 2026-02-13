@@ -83,6 +83,8 @@ class TestTerminalInterfaceIcons:
         displayed = []
         interpreter_mock.display_message.side_effect = lambda msg: displayed.append(msg)
 
+        # EOFError from simple_input is caught by terminal_interface which raises
+        # SystemExit(0). The intro messages are displayed before input is called.
         with patch(
             "interpreter.terminal_interface.terminal_interface.simple_input",
             side_effect=EOFError,
