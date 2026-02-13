@@ -88,9 +88,9 @@ class Terminal:
             audit_log("blocked_command", f"lang={language} pattern={pattern}")
             msg = f"Blocked: command matches restricted pattern '{pattern}'."
             if stream:
-                def _gen():
+                def blocked_message_stream():
                     yield {"type": "console", "format": "output", "content": msg}
-                return _gen()
+                return blocked_message_stream()
             return [{"type": "console", "format": "output", "content": msg}]
 
         audit_log("code_execution", f"lang={language} code_len={len(code)}")

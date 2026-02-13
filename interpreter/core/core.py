@@ -168,7 +168,7 @@ class OpenInterpreter:
             # Audit log: clean up old entries and log this chat session
             try:
                 cleanup_audit_log()
-            except Exception:
+            except OSError:
                 pass
             audit_log("chat_started", f"display={display} stream={stream}")
 

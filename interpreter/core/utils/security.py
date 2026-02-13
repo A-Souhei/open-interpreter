@@ -154,10 +154,11 @@ class FileAccessGuard:
         if not self.enabled or self.working_dir is None:
             return True, ""
 
-        abs_path = os.path.abspath(path)
+        abs_path = os.path.normcase(os.path.abspath(path))
+        working_dir = os.path.normcase(self.working_dir)
 
         # Must be inside working directory
-        if not abs_path.startswith(self.working_dir + os.sep) and abs_path != self.working_dir:
+        if not abs_path.startswith(working_dir + os.sep) and abs_path != working_dir:
             return False, f"Path '{path}' is outside the allowed working directory."
 
         # Check .gitignore patterns
@@ -208,7 +209,8 @@ def cleanup_audit_log(max_age_days=_MAX_AGE_DAYS):
             parts = line.split("|", 1)
             if parts:
                 try:
-                    ts = datetime.datetime.fromisoformat(parts[0].strip())
+                    ts_str = parts[0].strip().replace("Z", "+00:00")
+                    ts = datetime.datetime.fromisoformat(ts_str)
                     if ts >= cutoff:
                         kept.append(line)
                 except (ValueError, IndexError):
