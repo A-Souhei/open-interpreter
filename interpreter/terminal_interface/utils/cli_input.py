@@ -3,7 +3,6 @@ import os
 try:
     from prompt_toolkit.application import Application
     from prompt_toolkit.buffer import Buffer
-    from prompt_toolkit.formatted_text import FormattedText
     from prompt_toolkit.key_binding import KeyBindings
     from prompt_toolkit.layout import Layout, HSplit, Window
     from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
@@ -17,7 +16,7 @@ except ImportError:
 def _get_terminal_width():
     try:
         return os.get_terminal_size().columns
-    except:
+    except OSError:
         return 80
 
 

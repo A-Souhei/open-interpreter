@@ -1,17 +1,11 @@
 """Tests for terminal UI improvements: icons, labels, and prompt formatting."""
 
-import io
 import json
 import os
 import tempfile
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from rich.console import Console
-
 from interpreter.terminal_interface.components.code_block import CodeBlock
-from interpreter.terminal_interface.components.message_block import MessageBlock
 
 
 class TestCodeBlockLabels:
@@ -89,11 +83,17 @@ class TestTerminalInterfaceIcons:
         displayed = []
         interpreter_mock.display_message.side_effect = lambda msg: displayed.append(msg)
 
-        with patch("builtins.input", side_effect=KeyboardInterrupt):
+        with patch(
+            "interpreter.terminal_interface.terminal_interface.simple_input",
+            side_effect=EOFError,
+        ), patch(
+            "interpreter.terminal_interface.terminal_interface.cli_input",
+            side_effect=EOFError,
+        ):
             try:
                 gen = terminal_interface(interpreter_mock, None)
                 next(gen)
-            except (KeyboardInterrupt, StopIteration):
+            except (SystemExit, StopIteration):
                 pass
 
         return displayed

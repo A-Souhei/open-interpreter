@@ -23,10 +23,8 @@ import tokentrim as tt
 
 try:
     from yaspin import yaspin
-    from yaspin.spinners import Spinners
 except ImportError:
     yaspin = None
-    Spinners = None
 
 from .run_text_llm import run_text_llm
 

@@ -3,8 +3,6 @@ import re
 from rich.box import MINIMAL
 from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.style import Style
-from rich.theme import Theme
 
 from .base_block import BaseBlock
 

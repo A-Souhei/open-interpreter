@@ -3,7 +3,6 @@ from rich.console import Group
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
-import json
 
 from .base_block import BaseBlock
 
@@ -84,7 +83,7 @@ class CodeBlock(BaseBlock):
             code_table,
             box=MINIMAL,
             style="",
-            title=f"▶ {language_label}",
+            title=f"⏵ {language_label}",
             title_align="left",
         )
 
@@ -92,30 +91,11 @@ class CodeBlock(BaseBlock):
         if self.output == "" or self.output == "None":
             output_panel = ""
         else:
-            # Try to detect and format JSON output with better colors
-            output_content = self.output
-            try:
-                # Check if output is JSON
-                parsed_json = json.loads(self.output)
-                # If it is valid JSON, format it nicely with syntax highlighting
-                formatted_json = json.dumps(parsed_json, indent=2)
-                json_syntax = Syntax(
-                    formatted_json,
-                    "json",
-                    theme="material",
-                    line_numbers=False,
-                    word_wrap=True,
-                )
-                output_content = json_syntax
-            except (json.JSONDecodeError, TypeError):
-                # Not JSON, use as-is
-                pass
-            
             output_panel = Panel(
-                output_content,
+                self.output,
                 box=MINIMAL,
                 style="",
-                title="📤 output",
+                title="📎 output",
                 title_align="left",
             )
 

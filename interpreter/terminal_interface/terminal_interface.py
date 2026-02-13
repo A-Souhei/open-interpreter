@@ -50,9 +50,6 @@ except:
 
 
 def terminal_interface(interpreter, message):
-    # Clear the screen when starting the interpreter
-    os.system('cls' if os.name == 'nt' else 'clear')
-    
     # Auto run and offline (this.. this isn't right) don't display messages.
     # Probably worth abstracting this to something like "debug_cli" at some point.
     # If (len(interpreter.messages) == 1), they probably used the advanced "i {command}" entry, so no message should be displayed.
@@ -244,12 +241,16 @@ def terminal_interface(interpreter, message):
                                 else:
                                     response_map = {"Yes": "y", "No": "n", "Edit": "e"}
                                     response = response_map.get(answers["action"], "n")
-                            except Exception:
-                                # Fallback to plain text if inquirer fails
-                                response = input(
-                                    "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
-                                )
-                                print("")  # <- Aesthetic choice
+                            except (Exception, KeyboardInterrupt) as exc:
+                                if isinstance(exc, KeyboardInterrupt):
+                                    # Treat Ctrl-C during inquirer as a decline to run code
+                                    response = "n"
+                                else:
+                                    # Fallback to plain text if inquirer fails
+                                    response = input(
+                                        "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
+                                    )
+                                    print("")  # <- Aesthetic choice
                         elif interpreter.plain_text_display:
                             response = input(
                                 "Would you like to run this code? [Y]es / [N]o / [E]dit\n\n"
