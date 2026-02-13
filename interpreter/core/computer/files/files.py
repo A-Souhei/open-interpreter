@@ -1,6 +1,7 @@
 import difflib
 
 from ...utils.lazy_import import lazy_import
+from ...utils.security import FileAccessGuard, audit_log
 
 # Lazy import of aifs, imported when needed
 aifs = lazy_import('aifs')
@@ -8,6 +9,29 @@ aifs = lazy_import('aifs')
 class Files:
     def __init__(self, computer):
         self.computer = computer
+        self._guard = None
+
+    @property
+    def guard(self):
+        """Return the file access guard.
+
+        The guard is disabled by default.  Call
+        :meth:`set_working_directory` to enable working-directory
+        enforcement and .gitignore-based blocking.
+        """
+        if self._guard is None:
+            self._guard = FileAccessGuard(enabled=False)
+        return self._guard
+
+    def set_working_directory(self, working_dir, enabled=True):
+        """Configure the file access guard for the given working directory."""
+        self._guard = FileAccessGuard(working_dir=working_dir, enabled=enabled)
+
+    def _check_access(self, path):
+        allowed, reason = self.guard.is_path_allowed(path)
+        if not allowed:
+            audit_log("file_access_denied", reason)
+            raise PermissionError(reason)
 
     def search(self, *args, **kwargs):
         """
@@ -19,6 +43,9 @@ class Files:
         """
         Edits a file on the filesystem, replacing the original text with the replacement text.
         """
+        self._check_access(path)
+        audit_log("file_edit", f"path={path}")
+
         with open(path, "r") as file:
             filedata = file.read()
 

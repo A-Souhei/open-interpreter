@@ -27,13 +27,14 @@ def create_temporary_file(contents, extension=None, verbose=False):
     """
 
     try:
-        # Create a temporary file
+        # Create a temporary file with restrictive permissions (owner-only)
         with tempfile.NamedTemporaryFile(
             mode="w", delete=False, suffix=f".{extension}" if extension else ""
         ) as f:
             f.write(contents)
             temp_file_name = f.name
             f.close()
+        os.chmod(temp_file_name, 0o600)
 
         if verbose:
             print(f"Created temporary file {temp_file_name}")

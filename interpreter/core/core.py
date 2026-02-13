@@ -4,6 +4,7 @@ It's the main file. `from interpreter import interpreter` will import an instanc
 """
 import json
 import os
+import sys
 import threading
 import time
 from datetime import datetime
@@ -17,6 +18,7 @@ from .computer.computer import Computer
 from .default_system_message import default_system_message
 from .llm.llm import Llm
 from .respond import respond
+from .utils.security import audit_log, cleanup_audit_log
 from .utils.telemetry import send_telemetry
 from .utils.truncate_output import truncate_output
 
@@ -57,7 +59,7 @@ class OpenInterpreter:
             "Let me know what you'd like to do next.",
             "Please provide more information.",
         ],
-        disable_telemetry=False,
+        disable_telemetry=os.environ.get("DISABLE_TELEMETRY", "true").lower() != "false",
         in_terminal_interface=False,
         conversation_history=True,
         conversation_filename=None,
@@ -164,6 +166,13 @@ class OpenInterpreter:
     def chat(self, message=None, display=True, stream=False, blocking=True):
         try:
             self.responding = True
+            # Audit log: clean up old entries and log this chat session
+            try:
+                cleanup_audit_log()
+            except OSError as e:
+                print(f"Warning: audit log cleanup failed: {e}", file=sys.stderr)
+            audit_log("chat_started", f"display={display} stream={stream}")
+
             if self.anonymous_telemetry:
                 message_type = type(
                     message
@@ -279,14 +288,13 @@ class OpenInterpreter:
 
                 # Check if the directory exists, if not, create it
                 if not os.path.exists(self.conversation_history_path):
-                    os.makedirs(self.conversation_history_path)
-                # Write or overwrite the file
-                with open(
-                    os.path.join(
-                        self.conversation_history_path, self.conversation_filename
-                    ),
-                    "w",
-                ) as f:
+                    os.makedirs(self.conversation_history_path, mode=0o700)
+                # Write or overwrite the file with restrictive permissions
+                conv_path = os.path.join(
+                    self.conversation_history_path, self.conversation_filename
+                )
+                fd = os.open(conv_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+                with os.fdopen(fd, "w") as f:
                     json.dump(self.messages, f)
             return
 

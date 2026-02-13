@@ -429,8 +429,7 @@ def local_setup(interpreter, provider=None, model=None):
                 try:
                     # Run the selected model and hide its output
                     process = subprocess.Popen(
-                        f'"{model_path}" ' + " ".join(["--nobrowser", "-ngl", "9999"]),
-                        shell=True,
+                        [model_path, "--nobrowser", "-ngl", "9999"],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.STDOUT,
                         text=True,

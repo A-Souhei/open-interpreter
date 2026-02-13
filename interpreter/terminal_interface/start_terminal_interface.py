@@ -629,13 +629,10 @@ def main():
                     else:
                         feedback = None
                     if feedback != None and not interpreter.contribute_conversation:
-                        if interpreter.llm.model == "i":
-                            contribute = "y"
-                        else:
-                            print(
-                                "\nThanks for your feedback! Would you like to send us this chat so we can improve?\n"
-                            )
-                            contribute = input("(y/n): ").strip().lower()
+                        print(
+                            "\nThanks for your feedback! Would you like to send us this chat so we can improve?\n"
+                        )
+                        contribute = input("(y/n): ").strip().lower()
 
                         if contribute == "y":
                             interpreter.contribute_conversation = True
@@ -644,7 +641,7 @@ def main():
                             )
 
                 if (
-                    interpreter.contribute_conversation or interpreter.llm.model == "i"
+                    interpreter.contribute_conversation
                 ) and interpreter.messages != []:
                     conversation_id = (
                         interpreter.conversation_id

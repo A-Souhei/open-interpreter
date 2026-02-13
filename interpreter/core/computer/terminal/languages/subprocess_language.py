@@ -45,7 +45,28 @@ class SubprocessLanguage(BaseLanguage):
         if self.process:
             self.terminate()
 
-        my_env = os.environ.copy()
+        _sensitive_env_keys = (
+            # AI / API provider keys
+            "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "AWS_SECRET_ACCESS_KEY",
+            "GOOGLE_API_KEY", "AZURE_API_KEY", "GROQ_API_KEY",
+            "CEREBRAS_API_KEY", "PPLX_API_KEY",
+            # Cloud / service credentials
+            "AWS_ACCESS_KEY_ID", "AWS_SESSION_TOKEN",
+            "AZURE_TENANT_ID", "AZURE_CLIENT_ID", "AZURE_CLIENT_SECRET",
+            "GITHUB_TOKEN", "GITLAB_TOKEN", "GH_TOKEN",
+            "STRIPE_SECRET_KEY", "TWILIO_AUTH_TOKEN",
+            "MAILGUN_API_KEY", "SENDGRID_API_KEY",
+            "DATABASE_URL", "REDIS_URL", "DB_PASSWORD",
+            "SSH_AUTH_SOCK",
+        )
+        _sensitive_env_pattern = re.compile(
+            r"(KEY|SECRET|TOKEN|PASSWORD)", re.IGNORECASE
+        )
+        my_env = {
+            k: v for k, v in os.environ.items()
+            if k not in _sensitive_env_keys
+            and not _sensitive_env_pattern.search(k)
+        }
         my_env["PYTHONIOENCODING"] = "utf-8"
         self.process = subprocess.Popen(
             self.start_cmd,
