@@ -10,6 +10,7 @@ from .display.display import Display
 from .docs.docs import Docs
 from .files.files import Files
 from .keyboard.keyboard import Keyboard
+from .rag.rag import Rag
 from .mail.mail import Mail
 from .mouse.mouse import Mouse
 from .os.os import Os
@@ -44,6 +45,7 @@ class Computer:
         self.docs = Docs(self)
         self.ai = Ai(self)
         self.files = Files(self)
+        self.rag = Rag(self)
 
         self.emit_images = True
         self.api_base = "https://api.openinterpreter.com/v0"
@@ -102,6 +104,7 @@ Do not import the computer module, or any of its sub-modules. They are already i
             self.docs,
             self.ai,
             self.files,
+            self.rag,
         ]
 
     def _get_all_computer_tools_signature_and_description(self):
