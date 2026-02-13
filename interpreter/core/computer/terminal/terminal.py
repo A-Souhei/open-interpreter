@@ -2,8 +2,8 @@ import json
 import os
 import time
 import subprocess
-import getpass
 
+from ...utils.security import audit_log, is_command_blocked
 from ..utils.recipient_utils import parse_for_recipient
 from .languages.applescript import AppleScript
 from .languages.html import HTML
@@ -52,20 +52,22 @@ class Terminal:
             # First, try to install without sudo
             subprocess.run(['apt', 'install', '-y', package], check=True)
         except subprocess.CalledProcessError:
-            # If it fails, try with sudo
+            # If it fails, try with sudo using TTY-based authentication
             print(f"Installation of {package} requires sudo privileges.")
-            sudo_password = getpass.getpass("Enter sudo password: ")
+            print("Please authenticate via your system prompt.")
+            audit_log("sudo_install", f"Requesting sudo for package: {package}")
 
             try:
-                # Use sudo with password
+                # Use sudo with TTY-based authentication (no password piping)
                 subprocess.run(
-                    ['sudo', '-S', 'apt', 'install', '-y', package],
-                    input=sudo_password.encode(),
+                    ['sudo', 'apt', 'install', '-y', package],
                     check=True
                 )
                 print(f"Successfully installed {package}")
+                audit_log("sudo_install_success", f"Installed package: {package}")
             except subprocess.CalledProcessError as e:
                 print(f"Failed to install {package}. Error: {e}")
+                audit_log("sudo_install_failed", f"Failed to install: {package}")
                 return False
 
         return True
@@ -80,6 +82,19 @@ class Terminal:
         return None
 
     def run(self, language, code, stream=False, display=False):
+        # Check for blocked commands
+        blocked, pattern = is_command_blocked(code, language)
+        if blocked:
+            audit_log("blocked_command", f"lang={language} pattern={pattern}")
+            msg = f"Blocked: command matches restricted pattern '{pattern}'."
+            if stream:
+                def _gen():
+                    yield {"type": "console", "format": "output", "content": msg}
+                return _gen()
+            return [{"type": "console", "format": "output", "content": msg}]
+
+        audit_log("code_execution", f"lang={language} code_len={len(code)}")
+
         # Check if this is an apt install command
         if language == "shell" and code.strip().startswith("apt install"):
             package = code.split()[-1]

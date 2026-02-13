@@ -1,0 +1,40 @@
+command,type,description
+rm -rf /,blocked,Recursive force delete of root filesystem
+rm -rf /*,blocked,Recursive force delete of all root contents
+mkfs,blocked,Filesystem formatting command
+dd if=/dev,blocked,Low-level disk write from device
+:(){ :|:& };:,blocked,Fork bomb
+chmod -R 777 /,blocked,Remove all file permissions on root
+chown -R,blocked,Recursive ownership change
+shutdown,blocked,System shutdown command
+reboot,blocked,System reboot command
+init 0,blocked,System halt
+init 6,blocked,System reboot via init
+halt,blocked,System halt command
+poweroff,blocked,System poweroff command
+mkfs.ext4,blocked,Format disk as ext4
+mkfs.ext3,blocked,Format disk as ext3
+mkfs.xfs,blocked,Format disk as xfs
+wipefs,blocked,Wipe filesystem signatures
+shred,blocked,Securely overwrite files
+> /dev/sda,blocked,Direct write to disk device
+cat /dev/urandom,blocked,Read from random device (can hang)
+wget|sh,blocked,Download and execute remote script
+curl|sh,blocked,Download and execute remote script
+wget|bash,blocked,Download and execute remote script
+curl|bash,blocked,Download and execute remote script
+wget | sh,blocked,Download and execute remote script (spaced)
+curl | sh,blocked,Download and execute remote script (spaced)
+wget | bash,blocked,Download and execute remote script (spaced)
+curl | bash,blocked,Download and execute remote script (spaced)
+eval,blocked,Dynamic code evaluation in shell
+iptables -F,blocked,Flush all firewall rules
+ufw disable,blocked,Disable firewall
+passwd,blocked,Change user password
+useradd,blocked,Add system user
+userdel,blocked,Delete system user
+visudo,blocked,Edit sudoers file
+crontab -r,blocked,Remove all cron jobs
+systemctl disable,blocked,Disable system services
+nc -l,blocked,Open network listener (netcat)
+ncat -l,blocked,Open network listener (ncat)
