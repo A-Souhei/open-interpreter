@@ -45,14 +45,14 @@ class SubprocessLanguage(BaseLanguage):
         if self.process:
             self.terminate()
 
-        _sensitive_env_prefixes = (
+        _sensitive_env_keys = (
             "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "AWS_SECRET_ACCESS_KEY",
             "GOOGLE_API_KEY", "AZURE_API_KEY", "GROQ_API_KEY",
             "CEREBRAS_API_KEY", "PPLX_API_KEY", "DB_PASSWORD",
         )
         my_env = {
             k: v for k, v in os.environ.items()
-            if k not in _sensitive_env_prefixes
+            if k not in _sensitive_env_keys
         }
         my_env["PYTHONIOENCODING"] = "utf-8"
         self.process = subprocess.Popen(
