@@ -522,7 +522,7 @@ Use """ to write multi-line messages.
             # This message should actually be pushed into the utility
             if check_for_update():
                 interpreter.display_message(
-                    "> **A new version of Open Interpreter is available.**\n>Please run: `pip install --upgrade open-interpreter`\n\n---"
+                    "> 🆕 **A new version of Open Interpreter is available.**\n>Please run: `pip install --upgrade open-interpreter`\n\n---"
                 )
     except:
         # Doesn't matter

@@ -78,13 +78,26 @@ class CodeBlock(BaseBlock):
                 code_table.add_row(syntax)
 
         # Create a panel for the code
-        code_panel = Panel(code_table, box=MINIMAL, style="on #272722")
+        language_label = self.language if self.language else "code"
+        code_panel = Panel(
+            code_table,
+            box=MINIMAL,
+            style="on #272722",
+            title=f"⏵ {language_label}",
+            title_align="left",
+        )
 
         # Create a panel for the output (if there is any)
         if self.output == "" or self.output == "None":
             output_panel = ""
         else:
-            output_panel = Panel(self.output, box=MINIMAL, style="#FFFFFF on #3b3b37")
+            output_panel = Panel(
+                self.output,
+                box=MINIMAL,
+                style="#FFFFFF on #3b3b37",
+                title="📎 output",
+                title_align="left",
+            )
 
         # Create a group with the code table and output panel
         group_items = [code_panel, output_panel]

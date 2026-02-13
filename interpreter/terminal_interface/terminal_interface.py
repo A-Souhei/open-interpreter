@@ -54,21 +54,23 @@ def terminal_interface(interpreter, message):
         and not (len(interpreter.messages) == 1)
     ):
         interpreter_intro_message = [
-            "**Open Interpreter** will require approval before running code."
+            "🔓 **Open Interpreter** will require approval before running code."
         ]
 
         if interpreter.safe_mode == "ask" or interpreter.safe_mode == "auto":
             if not check_for_package("semgrep"):
                 interpreter_intro_message.append(
-                    f"**Safe Mode**: {interpreter.safe_mode}\n\n>Note: **Safe Mode** requires `semgrep` (`pip install semgrep`)"
+                    f"🛡️ **Safe Mode**: {interpreter.safe_mode}\n\n>Note: **Safe Mode** requires `semgrep` (`pip install semgrep`)"
                 )
         else:
-            interpreter_intro_message.append("Use `interpreter -y` to bypass this.")
+            interpreter_intro_message.append(
+                "⚡ Use `interpreter -y` to bypass this."
+            )
 
         if (
             not interpreter.plain_text_display
         ):  # A proxy/heuristic for standard in mode, which isn't tracked (but prob should be)
-            interpreter_intro_message.append("Press `CTRL-C` to exit.")
+            interpreter_intro_message.append("⌨️  Press `CTRL-C` to exit.")
 
         interpreter.display_message("\n\n".join(interpreter_intro_message) + "\n")
 
@@ -100,7 +102,7 @@ def terminal_interface(interpreter, message):
                     )
                 except (KeyboardInterrupt, EOFError):
                     # Treat Ctrl-D on an empty line the same as Ctrl-C by exiting gracefully
-                    interpreter.display_message("\n\n`Exiting...`")
+                    interpreter.display_message("\n\n👋 `Exiting...`")
                     raise KeyboardInterrupt
 
             try:
@@ -205,7 +207,7 @@ def terminal_interface(interpreter, message):
                                 should_scan_code = True
                             elif interpreter.safe_mode == "ask":
                                 response = input(
-                                    "  Would you like to scan this code? (y/n)\n\n  "
+                                    "  🛡️  Would you like to scan this code? (y/n)\n\n  "
                                 )
                                 print("")  # <- Aesthetic choice
 
@@ -217,11 +219,11 @@ def terminal_interface(interpreter, message):
 
                         if interpreter.plain_text_display:
                             response = input(
-                                "Would you like to run this code? (y/n)\n\n"
+                                "Would you like to run this code? [Y]es / [N]o / [E]dit\n\n"
                             )
                         else:
                             response = input(
-                                "  Would you like to run this code? (y/n)\n\n  "
+                                "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
                             )
                         print("")  # <- Aesthetic choice
 
@@ -266,6 +268,7 @@ def terminal_interface(interpreter, message):
                                     "content": "I have declined to run this code.",
                                 }
                             )
+                            print("  ✗ Code execution declined.")
                             break
 
                 # Plain text mode
