@@ -79,7 +79,7 @@ def handle_help(self, arguments):
 
 def handle_verbose(self, arguments=None):
     if arguments == "" or arguments == "true":
-        self.display_message("> Entered verbose mode")
+        self.display_message("➜ Entered verbose mode")
         print("\n\nCurrent messages:\n")
         for message in self.messages:
             message = message.copy()
@@ -94,15 +94,15 @@ def handle_verbose(self, arguments=None):
         print("\n")
         self.verbose = True
     elif arguments == "false":
-        self.display_message("> Exited verbose mode")
+        self.display_message("➜ Exited verbose mode")
         self.verbose = False
     else:
-        self.display_message("> Unknown argument to verbose command.")
+        self.display_message("➜ Unknown argument to verbose command.")
 
 
 def handle_debug(self, arguments=None):
     if arguments == "" or arguments == "true":
-        self.display_message("> Entered debug mode")
+        self.display_message("➜ Entered debug mode")
         print("\n\nCurrent messages:\n")
         for message in self.messages:
             message = message.copy()
@@ -117,21 +117,21 @@ def handle_debug(self, arguments=None):
         print("\n")
         self.debug = True
     elif arguments == "false":
-        self.display_message("> Exited verbose mode")
+        self.display_message("➜ Exited verbose mode")
         self.debug = False
     else:
-        self.display_message("> Unknown argument to debug command.")
+        self.display_message("➜ Unknown argument to debug command.")
 
 
 def handle_auto_run(self, arguments=None):
     if arguments == "" or arguments == "true":
-        self.display_message("> Entered auto_run mode")
+        self.display_message("➜ Entered auto_run mode")
         self.auto_run = True
     elif arguments == "false":
-        self.display_message("> Exited auto_run mode")
+        self.display_message("➜ Exited auto_run mode")
         self.auto_run = False
     else:
-        self.display_message("> Unknown argument to auto_run command.")
+        self.display_message("➜ Unknown argument to auto_run command.")
 
 
 def handle_info(self, arguments):
@@ -140,11 +140,11 @@ def handle_info(self, arguments):
 
 def handle_reset(self, arguments):
     self.reset()
-    self.display_message("> Reset Done")
+    self.display_message("➜ Reset Done")
 
 
 def default_handle(self, arguments):
-    self.display_message("> Unknown command")
+    self.display_message("➜ Unknown command")
     handle_help(self, arguments)
 
 
@@ -156,7 +156,7 @@ def handle_save_message(self, json_path):
     with open(json_path, "w") as f:
         json.dump(self.messages, f, indent=2)
 
-    self.display_message(f"> messages json export to {os.path.abspath(json_path)}")
+    self.display_message(f"➜ messages json export to {os.path.abspath(json_path)}")
 
 
 def handle_load_message(self, json_path):
@@ -167,7 +167,7 @@ def handle_load_message(self, json_path):
     with open(json_path, "r") as f:
         self.messages = json.load(f)
 
-    self.display_message(f"> messages json loaded from {os.path.abspath(json_path)}")
+    self.display_message(f"➜ messages json loaded from {os.path.abspath(json_path)}")
 
 
 def handle_count_tokens(self, prompt):

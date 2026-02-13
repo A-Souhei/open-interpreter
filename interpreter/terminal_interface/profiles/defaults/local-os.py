@@ -84,5 +84,5 @@ interpreter.display_message(
     "\n**Note:** Codestral is a relatively weak model, so OS mode is highly experimental. Try using a more powerful model for OS mode with `interpreter --os`."
 )
 interpreter.display_message(
-    f"> Model set to `{interpreter.llm.model}`, experimental OS control enabled"
+    f"➜ Model set to `{interpreter.llm.model}`, experimental OS control enabled"
 )

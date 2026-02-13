@@ -80,4 +80,4 @@ interpreter.auto_run = True
 interpreter.offline = True
 
 # Final message
-interpreter.display_message("> Model set to `llama3`, vision enabled")
+interpreter.display_message("➜ Model set to `llama3`, vision enabled")

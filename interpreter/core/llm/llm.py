@@ -21,6 +21,13 @@ import uuid
 import requests
 import tokentrim as tt
 
+try:
+    from yaspin import yaspin
+    from yaspin.spinners import Spinners
+except ImportError:
+    yaspin = None
+    Spinners = None
+
 from .run_text_llm import run_text_llm
 
 # from .run_function_calling_llm import run_function_calling_llm
@@ -372,8 +379,13 @@ Continuing...
 
             # Download model if not already installed
             if model_name not in names:
-                self.interpreter.display_message(f"\nDownloading {model_name}...\n")
-                requests.post(f"{api_base}/api/pull", json={"name": model_name})
+                if yaspin:
+                    with yaspin(text=f"  Downloading {model_name}...", color="cyan") as spinner:
+                        requests.post(f"{api_base}/api/pull", json={"name": model_name})
+                        spinner.ok("✓")
+                else:
+                    self.interpreter.display_message(f"\nDownloading {model_name}...\n")
+                    requests.post(f"{api_base}/api/pull", json={"name": model_name})
 
             # Get context window if not set
             if self.context_window == None:
@@ -394,12 +406,19 @@ Continuing...
 
             # Send a ping, which will actually load the model
             model_name = model_name.replace(":latest", "")
-            print(f"Loading {model_name}...\n")
-
-            old_max_tokens = self.max_tokens
-            self.max_tokens = 1
-            self.interpreter.computer.ai.chat("ping")
-            self.max_tokens = old_max_tokens
+            if yaspin:
+                with yaspin(text=f"  Loading {model_name}...", color="cyan") as spinner:
+                    old_max_tokens = self.max_tokens
+                    self.max_tokens = 1
+                    self.interpreter.computer.ai.chat("ping")
+                    self.max_tokens = old_max_tokens
+                    spinner.ok("✓")
+            else:
+                print(f"Loading {model_name}...\n")
+                old_max_tokens = self.max_tokens
+                self.max_tokens = 1
+                self.interpreter.computer.ai.chat("ping")
+                self.max_tokens = old_max_tokens
 
             self.interpreter.display_message("*Model loaded.*\n")
 

@@ -163,9 +163,9 @@ for package in packages:
 
 if missing_packages:
     interpreter.display_message(
-        f"> **Missing Package(s): {', '.join(['`' + p + '`' for p in missing_packages])}**\n\nThese packages are required for OS Control.\n\nInstall them?\n"
+        f"➜ **Missing Package(s): {', '.join(['`' + p + '`' for p in missing_packages])}**\n\nThese packages are required for OS Control.\n\nInstall them?\n"
     )
-    user_input = input("(y/n) > ")
+    user_input = input("(y/n) ➜ ")
     if user_input.lower() != "y":
         print("\nPlease try to install them manually.\n\n")
         time.sleep(2)

@@ -16,6 +16,11 @@ import subprocess
 import tempfile
 import time
 
+try:
+    import inquirer
+except ImportError:
+    inquirer = None
+
 from ..core.utils.scan_code import scan_code
 from ..core.utils.system_debug_info import system_info
 from ..core.utils.truncate_output import truncate_output
@@ -23,7 +28,7 @@ from .components.code_block import CodeBlock
 from .components.message_block import MessageBlock
 from .magic_commands import handle_magic_command
 from .utils.check_for_package import check_for_package
-from .utils.cli_input import cli_input
+from .utils.cli_input import cli_input, simple_input
 from .utils.display_output import display_output
 from .utils.find_image_path import find_image_path
 
@@ -45,6 +50,9 @@ except:
 
 
 def terminal_interface(interpreter, message):
+    # Clear the screen when starting the interpreter
+    os.system('cls' if os.name == 'nt' else 'clear')
+    
     # Auto run and offline (this.. this isn't right) don't display messages.
     # Probably worth abstracting this to something like "debug_cli" at some point.
     # If (len(interpreter.messages) == 1), they probably used the advanced "i {command}" entry, so no message should be displayed.
@@ -70,7 +78,7 @@ def terminal_interface(interpreter, message):
         if (
             not interpreter.plain_text_display
         ):  # A proxy/heuristic for standard in mode, which isn't tracked (but prob should be)
-            interpreter_intro_message.append("⌨️ Press `CTRL-C` to exit.")
+            interpreter_intro_message.append("⌨️ Press `CTRL-C` to clear, `CTRL-D` to exit.")
 
         interpreter.display_message("\n\n".join(interpreter_intro_message) + "\n")
 
@@ -95,15 +103,17 @@ def terminal_interface(interpreter, message):
             else:
                 ### This is the primary input for Open Interpreter.
                 try:
+                    model_name = getattr(interpreter.llm, 'model', '') or ''
                     message = (
-                        cli_input("> ").strip()
+                        cli_input("▶ ", model=model_name).strip()
                         if interpreter.multi_line
-                        else input("> ").strip()
+                        else simple_input("▶ ", model=model_name).strip()
                     )
-                except (KeyboardInterrupt, EOFError):
-                    # Treat Ctrl-D on an empty line the same as Ctrl-C by exiting gracefully
-                    interpreter.display_message("\n\n👋 `Exiting...`")
-                    raise KeyboardInterrupt
+                except EOFError:
+                    # CTRL+D: exit app (screen already cleared by cli_input)
+                    raise SystemExit(0)
+                except KeyboardInterrupt:
+                    continue
 
             try:
                 # This lets users hit the up arrow key for past messages
@@ -217,7 +227,30 @@ def terminal_interface(interpreter, message):
                         if should_scan_code:
                             scan_code(code, language, interpreter)
 
-                        if interpreter.plain_text_display:
+                        # Use inquirer for interactive selection if available
+                        if inquirer and not interpreter.plain_text_display:
+                            try:
+                                questions = [
+                                    inquirer.List(
+                                        "action",
+                                        message="Would you like to run this code?",
+                                        choices=["Yes", "No", "Edit"],
+                                        default="Yes",
+                                    ),
+                                ]
+                                answers = inquirer.prompt(questions)
+                                if answers is None:  # User pressed Ctrl-C
+                                    response = "n"
+                                else:
+                                    response_map = {"Yes": "y", "No": "n", "Edit": "e"}
+                                    response = response_map.get(answers["action"], "n")
+                            except Exception:
+                                # Fallback to plain text if inquirer fails
+                                response = input(
+                                    "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
+                                )
+                                print("")  # <- Aesthetic choice
+                        elif interpreter.plain_text_display:
                             response = input(
                                 "Would you like to run this code? [Y]es / [N]o / [E]dit\n\n"
                             )
@@ -225,7 +258,7 @@ def terminal_interface(interpreter, message):
                             response = input(
                                 "  ▶ Would you like to run this code? [Y]es / [N]o / [E]dit\n\n  "
                             )
-                        print("")  # <- Aesthetic choice
+                            print("")  # <- Aesthetic choice
 
                         if response.strip().lower() == "y":
                             # Create a new, identical block where the code will actually be run
