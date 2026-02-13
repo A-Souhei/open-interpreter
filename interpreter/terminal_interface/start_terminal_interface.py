@@ -480,8 +480,9 @@ Use """ to write multi-line messages.
     )
 
     ### Set attributes on interpreter, because the arguments passed in via the CLI should override profile
+    ### But only apply args that were explicitly passed, not defaults (which would overwrite profile values)
 
-    set_attributes(args, arguments)
+    set_attributes(args, arguments, only_explicit=True)
     interpreter.disable_telemetry = (
         os.getenv("DISABLE_TELEMETRY", "false").lower() == "true"
         or args.disable_telemetry
@@ -591,10 +592,16 @@ Use """ to write multi-line messages.
         interpreter.chat()
 
 
-def set_attributes(args, arguments):
+def set_attributes(args, arguments, only_explicit=False):
     for argument_name, argument_value in vars(args).items():
         if argument_value is not None:
             if argument_dictionary := get_argument_dictionary(arguments, argument_name):
+                # Skip args that match their default value when only_explicit is True
+                # This prevents CLI defaults from overwriting values set by profiles
+                if only_explicit and "default" in argument_dictionary:
+                    if argument_value == argument_dictionary["default"]:
+                        continue
+
                 if "attribute" in argument_dictionary:
                     attr_dict = argument_dictionary["attribute"]
                     setattr(attr_dict["object"], attr_dict["attr_name"], argument_value)
