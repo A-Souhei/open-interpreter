@@ -57,6 +57,30 @@ def respond(interpreter):
                     system_message + "\n\n" + interpreter.computer.system_message
                 )
 
+        # Auto-inject RAG context when indexed and latest message is from user
+        try:
+            rag = interpreter.computer.rag
+            if (
+                getattr(rag, "_indexed_dir", None)
+                and interpreter.messages
+                and interpreter.messages[-1].get("role") == "user"
+            ):
+                user_query = interpreter.messages[-1].get("content", "")
+                if user_query:
+                    results = rag.search(user_query, n_results=5)
+                    if results:
+                        snippets = []
+                        for r in results:
+                            snippets.append(
+                                f"**{r['filepath']}** (score {r['score']:.2f}):\n```\n{r['content']}\n```"
+                            )
+                        system_message += (
+                            "\n\n# RELEVANT CODEBASE CONTEXT\n\n"
+                            + "\n\n".join(snippets)
+                        )
+        except Exception:
+            pass  # RAG failure should never block the conversation
+
         # Storing the messages so they're accessible in the interpreter's computer
         # no... this is a huge time sink.....
         # if interpreter.sync_computer:
