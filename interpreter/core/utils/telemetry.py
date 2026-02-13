@@ -33,7 +33,8 @@ def get_or_create_uuid():
                 return file.read()
         else:
             new_uuid = str(uuid.uuid4())
-            with open(uuid_file_path, "w") as file:
+            fd = os.open(uuid_file_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, "w") as file:
                 file.write(new_uuid)
             return new_uuid
     except:

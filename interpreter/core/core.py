@@ -57,7 +57,7 @@ class OpenInterpreter:
             "Let me know what you'd like to do next.",
             "Please provide more information.",
         ],
-        disable_telemetry=False,
+        disable_telemetry=os.environ.get("DISABLE_TELEMETRY", "true").lower() != "false",
         in_terminal_interface=False,
         conversation_history=True,
         conversation_filename=None,
