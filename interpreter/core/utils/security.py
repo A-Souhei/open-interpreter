@@ -246,19 +246,27 @@ def check_code_for_protected_access(code, guard):
     if not guard or not guard.enabled or not guard._gitignore_patterns:
         return False, ""
 
+    code_lower = code.lower()
+    # Extract path-like tokens from the code for glob matching
+    tokens = re.findall(r"[A-Za-z0-9_\-./\\]+", code_lower)
+
     for pattern in guard._gitignore_patterns:
         if pattern.startswith("!"):
             continue
-        clean = pattern.rstrip("/")
+        clean = pattern.rstrip("/").strip()
         if not clean:
             continue
-        # Wildcard patterns like *.key → look for the extension
-        if clean.startswith("*"):
-            suffix = clean[1:]  # e.g. ".key"
-            if suffix and suffix in code:
-                return True, f"Code references protected pattern '{pattern}'"
+        clean_lower = clean.lower()
+
+        has_glob = any(ch in clean_lower for ch in ("*", "?", "["))
+        if has_glob:
+            for token in tokens:
+                if fnmatch.fnmatch(token, clean_lower) or fnmatch.fnmatch(
+                    os.path.basename(token), clean_lower
+                ):
+                    return True, f"Code references protected pattern '{pattern}'"
         else:
-            if clean in code:
+            if clean_lower in code_lower:
                 return True, f"Code references protected file/directory '{pattern}'"
 
     return False, ""

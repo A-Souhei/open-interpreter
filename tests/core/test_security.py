@@ -281,51 +281,53 @@ class TestCheckCodeForProtectedAccess:
         blocked, _ = check_code_for_protected_access('cat app.log', guard)
         assert blocked
 
+    def test_case_insensitive_matching(self, guard):
+        blocked, _ = check_code_for_protected_access('open(".ENV")', guard)
+        assert blocked, ".ENV should be blocked by .env pattern (case-insensitive)"
+
+    def test_complex_glob_pattern(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text("config.*.json\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        blocked, _ = check_code_for_protected_access('cat config.prod.json', guard)
+        assert blocked, "config.prod.json should match config.*.json"
+
+    def test_double_star_glob_pattern(self, tmp_path):
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text("**/*.key\n")
+        guard = FileAccessGuard(working_dir=str(tmp_path))
+        blocked, _ = check_code_for_protected_access('cat dir/server.key', guard)
+        assert blocked, "dir/server.key should match **/*.key"
+
 
 # ---------------------------------------------------------------------------
 # 9. Terminal integration with --safe file guard
 # ---------------------------------------------------------------------------
 
 class TestTerminalSafeMode:
-    def test_terminal_blocks_code_accessing_protected_file(self):
-        from interpreter import interpreter
-        from interpreter.core.utils.security import FileAccessGuard
-        import tempfile
+    def test_terminal_blocks_code_accessing_protected_file(self, tmp_path):
+        from interpreter.core.core import OpenInterpreter
 
-        with tempfile.TemporaryDirectory() as tmp:
-            gitignore_path = os.path.join(tmp, ".gitignore")
-            with open(gitignore_path, "w") as f:
-                f.write(".env\nsecrets/\n")
-            interpreter._file_access_guard = FileAccessGuard(
-                working_dir=tmp, enabled=True
-            )
-            try:
-                result = interpreter.computer.terminal.run(
-                    "shell", "cat .env", stream=False
-                )
-                assert "Blocked" in result[0]["content"]
-            finally:
-                interpreter._file_access_guard = None
+        interp = OpenInterpreter()
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text(".env\nsecrets/\n")
+        interp._file_access_guard = FileAccessGuard(
+            working_dir=str(tmp_path), enabled=True
+        )
+        result = interp.computer.terminal.run("shell", "cat .env", stream=False)
+        assert "Blocked" in result[0]["content"]
 
-    def test_terminal_allows_safe_code_in_safe_mode(self):
-        from interpreter import interpreter
-        from interpreter.core.utils.security import FileAccessGuard
-        import tempfile
+    def test_terminal_allows_safe_code_in_safe_mode(self, tmp_path):
+        from interpreter.core.core import OpenInterpreter
 
-        with tempfile.TemporaryDirectory() as tmp:
-            gitignore_path = os.path.join(tmp, ".gitignore")
-            with open(gitignore_path, "w") as f:
-                f.write(".env\n")
-            interpreter._file_access_guard = FileAccessGuard(
-                working_dir=tmp, enabled=True
-            )
-            try:
-                result = interpreter.computer.terminal.run(
-                    "shell", "echo hello", stream=False
-                )
-                assert "Blocked" not in result[0].get("content", "")
-            finally:
-                interpreter._file_access_guard = None
+        interp = OpenInterpreter()
+        gitignore = tmp_path / ".gitignore"
+        gitignore.write_text(".env\n")
+        interp._file_access_guard = FileAccessGuard(
+            working_dir=str(tmp_path), enabled=True
+        )
+        result = interp.computer.terminal.run("shell", "echo hello", stream=False)
+        assert "Blocked" not in result[0].get("content", "")
 
 
 # ---------------------------------------------------------------------------

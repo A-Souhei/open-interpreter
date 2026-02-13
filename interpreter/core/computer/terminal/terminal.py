@@ -99,7 +99,7 @@ class Terminal:
             blocked, reason = check_code_for_protected_access(code, guard)
             if blocked:
                 audit_log("blocked_protected_file", f"lang={language} reason={reason}")
-                msg = f"Blocked: {reason}. Use '--safe' mode responsibly."
+                msg = f"Blocked: {reason}. Access blocked by '--safe' mode."
                 if stream:
                     def protected_file_stream():
                         yield {"type": "console", "format": "output", "content": msg}
