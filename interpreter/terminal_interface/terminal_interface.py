@@ -72,6 +72,11 @@ def terminal_interface(interpreter, message):
                 "⚡ Use `interpreter -y` to bypass this."
             )
 
+        if getattr(interpreter, "safe", False) and getattr(interpreter, "_file_access_guard", None):
+            interpreter_intro_message.append(
+                "🛡️ **File Protection** is active. Files matching `.gitignore` / `.ai-ignore` patterns are blocked."
+            )
+
         if (
             not interpreter.plain_text_display
         ):  # A proxy/heuristic for standard in mode, which isn't tracked (but prob should be)

@@ -3,7 +3,7 @@ import os
 import time
 import subprocess
 
-from ...utils.security import audit_log, is_command_blocked
+from ...utils.security import audit_log, check_code_for_protected_access, is_command_blocked
 from ..utils.recipient_utils import parse_for_recipient
 from .languages.applescript import AppleScript
 from .languages.html import HTML
@@ -92,6 +92,19 @@ class Terminal:
                     yield {"type": "console", "format": "output", "content": msg}
                 return blocked_message_stream()
             return [{"type": "console", "format": "output", "content": msg}]
+
+        # Check for protected file access (--safe mode)
+        guard = getattr(self.computer.interpreter, "_file_access_guard", None)
+        if guard:
+            blocked, reason = check_code_for_protected_access(code, guard)
+            if blocked:
+                audit_log("blocked_protected_file", f"lang={language} reason={reason}")
+                msg = f"Blocked: {reason}. Access blocked by '--safe' mode."
+                if stream:
+                    def protected_file_stream():
+                        yield {"type": "console", "format": "output", "content": msg}
+                    return protected_file_stream()
+                return [{"type": "console", "format": "output", "content": msg}]
 
         audit_log("code_execution", f"lang={language} code_len={len(code)}")
 

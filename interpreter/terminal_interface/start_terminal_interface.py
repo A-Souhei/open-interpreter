@@ -180,12 +180,18 @@ def start_terminal_interface(interpreter):
         },
         {
             "name": "safe_mode",
-            "nickname": "safe",
             "help_text": "optionally enable safety mechanisms like code scanning; valid options are off, ask, and auto",
             "type": str,
             "choices": ["off", "ask", "auto"],
             "default": "off",
             "attribute": {"object": interpreter, "attr_name": "safe_mode"},
+        },
+        {
+            "name": "safe",
+            "help_text": "enable file access protection using .gitignore and .ai-ignore patterns in the current directory",
+            "type": bool,
+            "default": False,
+            "attribute": {"object": interpreter, "attr_name": "safe"},
         },
         {
             "name": "debug",
@@ -474,12 +480,20 @@ Use """ to write multi-line messages.
     )
 
     ### Set attributes on interpreter, because the arguments passed in via the CLI should override profile
+    ### But only apply args that were explicitly passed, not defaults (which would overwrite profile values)
 
-    set_attributes(args, arguments)
+    set_attributes(args, arguments, only_explicit=True)
     interpreter.disable_telemetry = (
         os.getenv("DISABLE_TELEMETRY", "false").lower() == "true"
         or args.disable_telemetry
     )
+
+    ### Initialize --safe file access guard
+    if interpreter.safe:
+        from ..core.utils.security import FileAccessGuard
+
+        guard = FileAccessGuard(working_dir=os.getcwd(), enabled=True)
+        interpreter._file_access_guard = guard
 
     ### Set some helpful settings we know are likely to be true
 
@@ -578,10 +592,16 @@ Use """ to write multi-line messages.
         interpreter.chat()
 
 
-def set_attributes(args, arguments):
+def set_attributes(args, arguments, only_explicit=False):
     for argument_name, argument_value in vars(args).items():
         if argument_value is not None:
             if argument_dictionary := get_argument_dictionary(arguments, argument_name):
+                # Skip args that match their default value when only_explicit is True
+                # This prevents CLI defaults from overwriting values set by profiles
+                if only_explicit and "default" in argument_dictionary:
+                    if argument_value == argument_dictionary["default"]:
+                        continue
+
                 if "attribute" in argument_dictionary:
                     attr_dict = argument_dictionary["attribute"]
                     setattr(attr_dict["object"], attr_dict["attr_name"], argument_value)

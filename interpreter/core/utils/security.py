@@ -194,6 +194,8 @@ class FileAccessGuard:
         if self.working_dir:
             gi = os.path.join(self.working_dir, ".gitignore")
             self._gitignore_patterns = _parse_gitignore(gi)
+            ai = os.path.join(self.working_dir, ".ai-ignore")
+            self._gitignore_patterns.extend(_parse_gitignore(ai))
 
     def is_path_allowed(self, path):
         """Return ``(allowed: bool, reason: str)``."""
@@ -219,6 +221,55 @@ class FileAccessGuard:
             return False, f"Path '{path}' matches a .gitignore pattern and is blocked."
 
         return True, ""
+
+    def get_protected_patterns_text(self):
+        """Return a human-readable description of protected patterns."""
+        if not self._gitignore_patterns:
+            return ""
+        lines = []
+        for p in self._gitignore_patterns:
+            if not p.startswith("!"):
+                lines.append(f"  - {p}")
+        return "\n".join(lines)
+
+
+def check_code_for_protected_access(code, guard):
+    """
+    Check whether *code* references files or directories protected by *guard*.
+
+    Returns ``(True, reason)`` when a protected reference is found, or
+    ``(False, "")`` otherwise.
+
+    **Note:** This is a defense-in-depth heuristic.  It checks for common
+    patterns but cannot catch every possible obfuscation.
+    """
+    if not guard or not guard.enabled or not guard._gitignore_patterns:
+        return False, ""
+
+    code_lower = code.lower()
+    # Extract path-like tokens from the code for glob matching
+    tokens = re.findall(r"[A-Za-z0-9_\-./\\]+", code_lower)
+
+    for pattern in guard._gitignore_patterns:
+        if pattern.startswith("!"):
+            continue
+        clean = pattern.rstrip("/").strip()
+        if not clean:
+            continue
+        clean_lower = clean.lower()
+
+        has_glob = any(ch in clean_lower for ch in ("*", "?", "["))
+        if has_glob:
+            for token in tokens:
+                if fnmatch.fnmatch(token, clean_lower) or fnmatch.fnmatch(
+                    os.path.basename(token), clean_lower
+                ):
+                    return True, f"Code references protected pattern '{pattern}'"
+        else:
+            if clean_lower in code_lower:
+                return True, f"Code references protected file/directory '{pattern}'"
+
+    return False, ""
 
 
 # ---------------------------------------------------------------------------

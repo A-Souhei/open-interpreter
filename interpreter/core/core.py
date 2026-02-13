@@ -50,6 +50,7 @@ class OpenInterpreter:
         debug=False,
         max_output=2800,
         safe_mode="off",
+        safe=False,
         shrink_images=True,
         loop=False,
         loop_message="""Proceed. You CAN run code on my machine. If the entire task I asked for is done, say exactly 'The task is done.' If you need some specific information (like username or password) say EXACTLY 'Please provide more information.' If it's impossible, say 'The task is impossible.' (If I haven't provided a task, say exactly 'Let me know what you'd like to do next.') Otherwise keep going.""",
@@ -95,6 +96,8 @@ class OpenInterpreter:
         self.debug = debug
         self.max_output = max_output
         self.safe_mode = safe_mode
+        self.safe = safe
+        self._file_access_guard = None
         self.shrink_images = shrink_images
         self.disable_telemetry = disable_telemetry
         self.in_terminal_interface = in_terminal_interface
