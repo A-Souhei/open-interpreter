@@ -4,6 +4,7 @@ It's the main file. `from interpreter import interpreter` will import an instanc
 """
 import json
 import os
+import sys
 import threading
 import time
 from datetime import datetime
@@ -169,8 +170,7 @@ class OpenInterpreter:
             try:
                 cleanup_audit_log()
             except OSError as e:
-                import sys as _sys
-                print(f"Warning: audit log cleanup failed: {e}", file=_sys.stderr)
+                print(f"Warning: audit log cleanup failed: {e}", file=sys.stderr)
             audit_log("chat_started", f"display={display} stream={stream}")
 
             if self.anonymous_telemetry:
