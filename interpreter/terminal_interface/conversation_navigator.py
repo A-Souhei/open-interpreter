@@ -52,7 +52,7 @@ def conversation_navigator(interpreter):
     # Add the option to open the folder. This doesn't map to a filename, we'll catch it
     readable_names_and_filenames_list = list(readable_names_and_filenames.keys())
     readable_names_and_filenames_list = [
-        "Open Folder →"
+        "📂 Open Folder →"
     ] + readable_names_and_filenames_list
 
     # Use inquirer to let the user select a file
@@ -70,7 +70,7 @@ def conversation_navigator(interpreter):
         return
 
     # If the user selected to open the folder, do so and return
-    if answers["name"] == "Open Folder →":
+    if answers["name"] == "📂 Open Folder →":
         open_folder(conversations_dir)
         return
 

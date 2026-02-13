@@ -49,7 +49,7 @@ def validate_llm_settings(interpreter):
 
                     interpreter.display_message(
                         """---
-                    > OpenAI API key not found
+                    ➜ OpenAI API key not found
 
                     To use `gpt-4o` (recommended) please provide an OpenAI API key.
 
@@ -95,7 +95,7 @@ def validate_llm_settings(interpreter):
         and not interpreter.offline
         and not (len(interpreter.messages) == 1)
     ):
-        interpreter.display_message(f"> Model set to `{interpreter.llm.model}`")
+        interpreter.display_message(f"➜ Model set to `{interpreter.llm.model}`")
     if len(interpreter.messages) == 1:
         # Special message for "i {command}" usage
         # interpreter.display_message(f"\n*{interpreter.llm.model} via Open Interpreter:*")

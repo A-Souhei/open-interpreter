@@ -22,8 +22,8 @@ class MessageBlock(BaseBlock):
         if cursor:
             content += "●"
 
-        markdown = Markdown(content.strip())
-        panel = Panel(markdown, box=MINIMAL)
+        markdown = Markdown(content.strip(), code_theme="material", inline_code_lexer="text", inline_code_theme="material")
+        panel = Panel(markdown, box=MINIMAL, style="")
         self.live.update(panel)
         self.live.refresh()
 

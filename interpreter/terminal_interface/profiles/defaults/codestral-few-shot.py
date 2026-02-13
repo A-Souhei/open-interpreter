@@ -31,18 +31,30 @@ names = [
 ]  # Extract names, trim out ":latest", skip header
 
 if model_name not in names:
-    interpreter.display_message(f"\nDownloading {model_name}...\n")
-    subprocess.run(["ollama", "pull", model_name], check=True)
+    if yaspin:
+        with yaspin(text=f"  Downloading {model_name}...", color="cyan") as spinner:
+            subprocess.run(["ollama", "pull", model_name], check=True)
+            spinner.ok("✓")
+    else:
+        interpreter.display_message(f"\nDownloading {model_name}...\n")
+        subprocess.run(["ollama", "pull", model_name], check=True)
 
 # Send a ping, which will actually load the model
-interpreter.display_message("\n*Loading model...*\n")
+if yaspin:
+    with yaspin(text=f"  Loading {model_name}...", color="cyan") as spinner:
+        old_max_tokens = interpreter.llm.max_tokens
+        interpreter.llm.max_tokens = 1
+        interpreter.computer.ai.chat("ping")
+        interpreter.llm.max_tokens = old_max_tokens
+        spinner.ok("✓")
+else:
+    interpreter.display_message("\n*Loading model...*\n")
+    old_max_tokens = interpreter.llm.max_tokens
+    interpreter.llm.max_tokens = 1
+    interpreter.computer.ai.chat("ping")
+    interpreter.llm.max_tokens = old_max_tokens
 
-old_max_tokens = interpreter.llm.max_tokens
-interpreter.llm.max_tokens = 1
-interpreter.computer.ai.chat("ping")
-interpreter.llm.max_tokens = old_max_tokens
-
-interpreter.display_message("> Model set to `codestral`")
+interpreter.display_message("➜ Model set to `codestral`")
 
 
 # Set the system message to a minimal version for all local models.

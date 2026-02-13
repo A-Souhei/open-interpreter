@@ -117,4 +117,4 @@ Try multiple methods before saying the task is impossible. **You can do it!**
 """.strip()
 
 # Final message
-interpreter.display_message("> Assistant mode enabled")
+interpreter.display_message("➜ Assistant mode enabled")

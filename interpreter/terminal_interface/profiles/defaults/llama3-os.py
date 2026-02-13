@@ -89,4 +89,4 @@ interpreter.display_message(
 interpreter.display_message(
     "\n**Note:** Llama-3 is a relatively weak model, so OS mode is highly experimental. Try using a more powerful model for OS mode with `interpreter --os`."
 )
-interpreter.display_message("> Model set to `llama3`, experimental OS control enabled")
+interpreter.display_message("➜ Model set to `llama3`, experimental OS control enabled")

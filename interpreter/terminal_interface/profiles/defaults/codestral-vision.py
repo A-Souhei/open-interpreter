@@ -100,4 +100,4 @@ interpreter.auto_run = False
 interpreter.offline = True
 
 # Final message
-interpreter.display_message("> Model set to `codestral`, vision enabled")
+interpreter.display_message("➜ Model set to `codestral`, vision enabled")
